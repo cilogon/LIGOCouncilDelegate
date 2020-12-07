@@ -10,10 +10,10 @@ N = CEILING(GWC/5)
 
 where:
 
-GWC = Sum of TWC for all members of MOU
+MWC = Sum of TWC for all members of MOU
 ```
 
-The definition of `TWC` is found in the LSC ByLaws and should be implemented
+The definition of `MWC` is found in the LSC ByLaws and should be implemented
 in COmanage by another plugin (currently being written by Mike Manske) in such
 a way that every person in the LSC has a `TWC` defined before their enrollment
 is finalized.
