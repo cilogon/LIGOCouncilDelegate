@@ -13,12 +13,14 @@ class CouncilDelegate extends AppModel {
 
   // Document foreign keys
   public $cmPluginHasMany = array(
-    "Cou" => array("CouncilDelegate")
+    "Cou" => array("CouncilDelegate"),
+    "CoPerson" => array("CouncilDelegate"),
   );
 
   // Association rules from this model to other models
   public $belongsTo = array(
-    "Cou"
+    "Cou",
+//    "CoPerson"
   );
 
   // Default display field for cake generated views
@@ -37,6 +39,5 @@ class CouncilDelegate extends AppModel {
       'allowEmpty' => false
     )
   );
-
 
 }

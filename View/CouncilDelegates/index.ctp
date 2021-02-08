@@ -1,4 +1,4 @@
-<?
+<?php
   // Add page title
   $params = array();
   $params['title'] = $title_for_layout;
@@ -60,7 +60,7 @@
                     'controller' => 'council_delegates',
                     'action' => 'delete', $d['CouncilDelegate']['id']
                   ),
-                  array('class' => 'deletebutton')) . "\n";
+                  array('class' => 'editbutton')) . "\n";
             }
           ?>
         </td>
@@ -68,8 +68,6 @@
       <?php $i++; ?>
       <?php endforeach; ?>
     </tbody>
-
-
-
   </table>
 </div>
+
