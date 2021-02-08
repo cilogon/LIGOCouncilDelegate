@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+
+<schema version="0.3">
+    <table name="council_delegates">
+        <field name="id" type="I">
+            <key />
+            <autoincrement />
+        </field>
+        <field name="cou_id" type="I" />
+        <field name="coperson_id" type="I" />
+        <field name="created" type="T" />
+        <field name="modified" type="T" />
+
+        <index name="council_delgates_i1">
+            <col>cou_id</col>
+        </index>
+    </table>
+
+</schema>
