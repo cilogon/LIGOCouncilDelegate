@@ -11,7 +11,7 @@
         <field name="created" type="T" />
         <field name="modified" type="T" />
 
-        <index name="council_delgates_i1">
+        <index name="council_delegates_i1">
             <col>cou_id</col>
         </index>
     </table>
