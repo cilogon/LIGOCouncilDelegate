@@ -22,18 +22,15 @@ class LigoCouncil extends AppModel {
       $coPersonModel = ClassRegistry::init('CoPerson');
       $args = array();
       $args['conditions']['CoPerson.id'] = $coPersonId;
-      $args['contain'][] = 'CoGroupMember';
-      $args['contain']['CoGroupMember'][] = 'CoGroup';
+      $args['contain']['CoGroupMember']['CoGroup'] = 'Cou';
       $coPerson = $coPersonModel->find('first', $args);
 
       foreach($coPerson['CoGroupMember'] as $m) {
         if($m['CoGroup']['group_type'] == GroupEnum::Admins && $m['CoGroup']['cou_id']) {
-          $cou_id = $m['CoGroup']['cou_id'];
-            $menus = array(
-              "copeople" => array(
-                _txt('pl.ligo_council.menu.copeople') => array('controller' => 'council_delegates', 'action' => 'index', 'cou' => $cou_id)
-              )
-            );
+          $couId = $m['CoGroup']['cou_id'];
+          $couName = $m['CoGroup']['Cou']['name'];
+          $menus["copeople"] = array(_txt('pl.ligo_council.menu.copeople', array($couName)) => array('controller' => 'council_delegates', 'action' => 'index', 'cou' => $couId));
+          break;
         }
       }
     }

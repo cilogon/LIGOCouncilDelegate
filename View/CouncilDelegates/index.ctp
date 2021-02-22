@@ -14,8 +14,7 @@
   <table id="council_delegates">
     <thead>
       <tr>
-        <th><?php print $this->Paginator->sort('cou_id', 'cou_id'); ?></th>
-        <th><?php print $this->Paginator->sort('coperson_id', 'coperson_id'); ?></th>
+        <th>Name</th>
         <th><?php print _txt('fd.actions'); ?></th>
       </tr>
     </thead>
@@ -27,7 +26,7 @@
         <td>
           <?php
             print $this->Html->link(
-              $d['CouncilDelegate']['cou_id'],
+              $d['CoPerson']['PrimaryName']['given'] . " " . $d['CoPerson']['PrimaryName']['family'],
               array(
                 'plugin' => 'ligo_council',
                 'controller' => 'council_delegates',
@@ -36,9 +35,6 @@
               )
             );
           ?>
-        </td>
-        <td>
-          <?php print $d['CouncilDelegate']['coperson_id']; ?>
         </td>
         <td>
           <?php

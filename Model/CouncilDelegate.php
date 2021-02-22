@@ -8,8 +8,10 @@ class CouncilDelegate extends AppModel {
   public $name = "CouncilDelegate";
 
   // Add behaviors
-  public $actAs = array('Containable',
-                        'Changelog' => array('priority' => 5));
+  public $actsAs = array(
+    'Containable',
+    //'Changelog' => array('priority' => 5)
+  );
 
   // Document foreign keys
   public $cmPluginHasMany = array(
@@ -20,7 +22,7 @@ class CouncilDelegate extends AppModel {
   // Association rules from this model to other models
   public $belongsTo = array(
     "Cou",
-//    "CoPerson"
+    "CoPerson"
   );
 
   // Default display field for cake generated views
@@ -33,7 +35,7 @@ class CouncilDelegate extends AppModel {
       'required' => true,
       'allowEmpty' => false
     ),
-    'coperson_id' => array(
+    'co_person_id' => array(
       'rule' => 'numeric',
       'required' => true,
       'allowEmpty' => false

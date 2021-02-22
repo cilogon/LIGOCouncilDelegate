@@ -20,9 +20,12 @@ class CouncilDelegatesController extends StandardController {
     $couId = $this->params['named']['cou'];
 
     $args = array();
-    $args['conditions']['Cou.id'] = $couId;
+    $args['conditions']['CouncilDelegate.cou_id'] = $couId;
+    $args['contain']['CoPerson'] = 'PrimaryName';
 
-    $this->set('council_delegates', $this->CouncilDelegate->find('all', $args));
+    $councilDelegates = $this->CouncilDelegate->find('all', $args);
+
+    $this->set('council_delegates', $councilDelegates);
 
   }
 

@@ -7,7 +7,7 @@
             <autoincrement />
         </field>
         <field name="cou_id" type="I" />
-        <field name="coperson_id" type="I" />
+        <field name="co_person_id" type="I" />
         <field name="created" type="T" />
         <field name="modified" type="T" />
 
