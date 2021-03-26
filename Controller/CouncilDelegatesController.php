@@ -27,6 +27,17 @@ class CouncilDelegatesController extends StandardController {
 
     $this->set('council_delegates', $councilDelegates);
 
+    $coPersonRoleModel = ClassRegistry::init('CoPersonRole');
+
+    $args = array();
+    $args['conditions']['CoPersonRole.cou_id'] = $couId;
+    $args['conditions']['CoPersonRole.status'] = StatusEnum::Active;
+    $args['contain']['CoPerson'] = 'PrimaryName';
+
+    $coPersonRoles = $coPersonRoleModel->find('all', $args);
+    usort($coPersonRoles, array($this, "coPersonPrimaryNameCmp"));
+
+    $this->set('co_person_roles', $coPersonRoles);
   }
 
   /*
@@ -69,6 +80,14 @@ class CouncilDelegatesController extends StandardController {
     
     $this->set('permissions', $p);
     return($p[$this->action]);
+  }
+
+  /*
+   * Sort CoPersonRole objects by the CoPerson->PrimaryName associated model using
+   * the given name attribute.
+   */
+  function coPersonPrimaryNameCmp($coPerson1, $coPerson2) {
+    return strcmp($coPerson1['CoPerson']['PrimaryName']['family'], $coPerson2['CoPerson']['PrimaryName']['family']);
   }
 
 }
