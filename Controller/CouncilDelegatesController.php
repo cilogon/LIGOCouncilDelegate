@@ -15,18 +15,64 @@ class CouncilDelegatesController extends StandardController {
    * @return Array Permissions
    */
   function index() {
+    $couId = $this->params['named']['cou'];
+    $this->set('cou_id', $couId);
+
     $this->set('title_for_layout', _txt('ct.council_delegates.pl'));
 
-    $couId = $this->params['named']['cou'];
-
+    // Query for current delegates.
     $args = array();
     $args['conditions']['CouncilDelegate.cou_id'] = $couId;
     $args['contain']['CoPerson'] = 'PrimaryName';
 
     $councilDelegates = $this->CouncilDelegate->find('all', $args);
 
+    // Process incoming POST CouncilDelegate data.
+    if($this->request->is('post')) {
+      foreach($this->data['CouncilDelegate']['rows'] as $d) {
+        // Reset model state between save/delete calls.
+        $this->CouncilDelegate->clear();
+
+        // CO Person is current delegate and selected to remain a delegate.
+        if(!empty($d['id']) && $d['delegate'] == 1) {
+          continue;
+        }
+
+        // CO Person is current delegate and selected to be removed so delete.
+        if(!empty($d['id']) && $d['delegate'] == 0) {
+          if(!$this->CouncilDelegate->delete($d['id'])) {
+            // TODO Flash error here.
+          }
+          continue;
+        }
+
+        // CO Person is not current delegate and selected to become delegate.
+        if(empty($d['id']) && $d['delegate'] == 1) {
+          $newDelegate['CouncilDelegate'] = $d;
+          if(!$this->CouncilDelegate->save($newDelegate)) {
+            // TODO Flash error here.
+          }
+        }
+
+        //TODO History Records
+      }
+
+      // Redirect back to index to render updated delegate information.
+      $redir = array();
+      $redir['plugin'] = 'ligo_council';
+      $redir['controller'] = 'council_delegates';
+      $redir['action'] = 'index';
+      $redir['co'] = $this->cur_co['Co']['id'];
+      $redir['cou'] = $couId;
+
+      $this->redirect($redir);
+
+    } // End of process incoming POST.
+
     $this->set('council_delegates', $councilDelegates);
 
+    // Query for active CO Person Roles for this COU and include
+    // PrimaryName for rendering the form.
     $coPersonRoleModel = ClassRegistry::init('CoPersonRole');
 
     $args = array();
@@ -63,21 +109,9 @@ class CouncilDelegatesController extends StandardController {
     
     // Determine what operations this user can perform
     //
-    // Add a Council Delegate?
-    $p['add'] = ($roles['cmadmin'] || $roles['coadmin'] || $isNamedCouAdmin);
-    
-    // Delete an existing Council Delegate?
-    $p['delete'] = ($roles['cmadmin'] || $roles['coadmin'] || $isNamedCouAdmin);
-
-    // Edit an existing Council Delegate?
-    $p['edit'] = ($roles['cmadmin'] || $roles['coadmin'] || $isNamedCouAdmin);
-
-    // View all existing Council Delegates?
+    // Manage all existing Council Delegates?
     $p['index'] = ($roles['cmadmin'] || $roles['coadmin'] || $isNamedCouAdmin);
-    
-    // View an existing Council Delgate?
-    $p['view'] = ($roles['cmadmin'] || $roles['coadmin'] || $isNamedCouAdmin);
-    
+
     $this->set('permissions', $p);
     return($p[$this->action]);
   }
@@ -89,5 +123,4 @@ class CouncilDelegatesController extends StandardController {
   function coPersonPrimaryNameCmp($coPerson1, $coPerson2) {
     return strcmp($coPerson1['CoPerson']['PrimaryName']['family'], $coPerson2['CoPerson']['PrimaryName']['family']);
   }
-
 }

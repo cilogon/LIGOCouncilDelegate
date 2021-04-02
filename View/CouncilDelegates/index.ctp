@@ -8,9 +8,20 @@
 
   print $this->element("pageTitleAndButtons", $params);
 
+  $submit_label = _txt('op.add');
+
+  print $this->Form->create(
+    "LigoCouncil.CouncilDelegate",
+    array(
+      'inputDefaults' => array(
+        'label' => false,
+        'div' => false
+      )
+    )
+  );
+
 ?>
 
-<!-- First table displays current council delegates -->
 <div class="table-container">
   <table id="current_council_delegates">
 
@@ -44,6 +55,9 @@
             $class = "line" . strval(($i % 2) + 1);
             print '<tr class="' . $class . '">';
             print '<td>';
+            print $this->Form->hidden('CouncilDelegate.rows.'.$row.'.id', array('default' => $d['CouncilDelegate']['id']));
+            print $this->Form->hidden('CouncilDelegate.rows.'.$row.'.cou_id', array('default' => $cou_id));
+            print $this->Form->hidden('CouncilDelegate.rows.'.$row.'.co_person_id', array('default' => $d['CouncilDelegate']['co_person_id']));
             print $this->Form->checkbox($fieldName, $args);
             print $this->Form->label($fieldName, $displayName);
             print '</td>';
@@ -58,21 +72,14 @@
       }  
     ?>
 
-    </tbody>
-  </table>
-</div>
-
-<hr></hr>
-
-<!-- Second table displays possible council delegates -->
-<div class="table-container">
-  <table id="not_current_council_delegates">
-
-    <tbody>
+      <tr>
+        <td colspan="1">
+          <hr></hr>
+        </td>
+      </tr>
 
     <?php
-      // Reset the table row <tr> class for alternating shading since this
-      // is a new table.
+      // Reset the table row <tr> class for alternating shading.
       $i = 0;
 
       // Loop over the CO Person roles and if the person is NOT currently
@@ -106,6 +113,8 @@
         $class = "line" . strval(($i % 2) + 1);
         print '<tr class="' . $class . '">';
         print '<td>';
+        print $this->Form->hidden('CouncilDelegate.rows.'.$row.'.cou_id', array('default' => $cou_id));
+        print $this->Form->hidden('CouncilDelegate.rows.'.$row.'.co_person_id', array('default' => $coPersonId));
         print $this->Form->checkbox($fieldName, $args);
         print $this->Form->label($fieldName, $displayName) . "\n";
         print '</td>';
@@ -115,5 +124,22 @@
       }  
     ?>
     </tbody>
+
+    <tfoot>
+      <tr>
+        <th colspan="1">
+        </th>
+      </tr>
+      <tr>
+        <td>
+          <?php
+            $options = array('style' => 'float:left;');
+            print $this->Form->submit(_txt('op.save'), $options);
+            print $this->Form->end();
+          ?>
+        </td>
+      </tr>
+    </tfoot>
+
   </table>
 </div>
