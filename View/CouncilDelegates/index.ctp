@@ -1,3 +1,38 @@
+<script type="text/javascript">
+
+function checkDelegateCount(e) {
+  var delegates_selected = $("input:checked").length;
+
+  if(delegates_selected > window.allowed_delegate_number) {
+    $(e).prop("checked", false);
+    $("#confirm-delegate-max-dialog").dialog("open");
+  }
+}
+
+function js_local_onload() {
+  window.allowed_delegate_number = <?php print $allowed_delegate_number ?>;
+
+  $("#confirm-delegate-max-dialog").dialog({
+    autoOpen: false,
+    buttons: {
+    "<?php print _txt('pl.ligo_council.dialog.close') ?>": function() {
+        $(this).dialog("close");
+      }
+    },
+    modal: true,
+    show: {
+      effect: "fade"
+    },
+    hide: {
+      effect: "fade"
+    }
+  });
+
+}
+
+</script>
+
+
 <?php
   // Add page title
   $params = array();
@@ -21,6 +56,7 @@
   );
 
 ?>
+
 
 <div class="table-container">
   <table id="current_council_delegates">
@@ -51,6 +87,7 @@
             $fieldName = 'CouncilDelegate.rows.'.$row.'.delegate';
             $args = array();
             $args['checked'] = true;
+            $args['onclick'] = 'checkDelegateCount(this)';
 
             $class = "line" . strval(($i % 2) + 1);
             print '<tr class="' . $class . '">';
@@ -109,6 +146,7 @@
         $fieldName = 'CouncilDelegate.rows.'.$row.'.delegate';
         $args = array();
         $args['checked'] = false;
+        $args['onclick'] = 'checkDelegateCount(this)';
 
         $class = "line" . strval(($i % 2) + 1);
         print '<tr class="' . $class . '">';
@@ -124,6 +162,7 @@
       }  
     ?>
     </tbody>
+
 
     <tfoot>
       <tr>
@@ -142,4 +181,10 @@
     </tfoot>
 
   </table>
+
+
+</div>
+
+<div id="confirm-delegate-max-dialog" title="<?php print _txt('pl.ligo_council.dialog.title')?>">
+  <p><?php print _txt('pl.ligo_council.dialog.text', array($allowed_delegate_number)) ?></p>
 </div>
