@@ -18,7 +18,12 @@ class CouncilDelegatesController extends StandardController {
     $couId = $this->params['named']['cou'];
     $this->set('cou_id', $couId);
 
-    $this->set('title_for_layout', _txt('ct.council_delegates.pl'));
+    $args = array();
+    $args['conditions']['Cou.id'] = $couId;
+    $args['contain'] = false;
+    $cou = $this->CouncilDelegate->Cou->find('first', $args);
+
+    $this->set('title_for_layout', _txt('ct.cou_council_delegates', array($cou['Cou']['name'])));
 
     // Query for current delegates.
     $args = array();
@@ -72,7 +77,15 @@ class CouncilDelegatesController extends StandardController {
 
           // CO Person is current delegate and selected to be removed so delete.
           if(!empty($d['id']) && $d['delegate'] == 0) {
-            if(!$this->CouncilDelegate->delete($d['id'])) {
+            if($this->CouncilDelegate->delete($d['id'])) {
+              $this->CouncilDelegate->CoPerson->HistoryRecord->record($d['co_person_id'],
+                                                                      null,
+                                                                      null,
+                                                                      $this->Session->read('Auth.User.co_person_id'),
+                                                                      CouncilDelegateActionEnum::Remove,
+                                                                      _txt('pl.ligo_council.rs.removed', array($cou['Cou']['name']))
+                                                                      );
+            } else {
               $this->log("Error deleting CouncilDelegate with ID " . print_r($d['id'], true));
               $err = True;
               $this->Flash->set(_txt('pl.ligo_council.error.unexpected'), array('key' => 'error'));
@@ -83,14 +96,20 @@ class CouncilDelegatesController extends StandardController {
           // CO Person is not current delegate and selected to become delegate.
           if(empty($d['id']) && $d['delegate'] == 1) {
             $newDelegate['CouncilDelegate'] = $d;
-            if(!$this->CouncilDelegate->save($newDelegate)) {
+            if($this->CouncilDelegate->save($newDelegate)) {
+              $this->CouncilDelegate->CoPerson->HistoryRecord->record($newDelegate['CouncilDelegate']['co_person_id'],
+                                                                      null,
+                                                                      null,
+                                                                      $this->Session->read('Auth.User.co_person_id'),
+                                                                      CouncilDelegateActionEnum::Add,
+                                                                      _txt('pl.ligo_council.rs.added', array($cou['Cou']['name']))
+                                                                      );
+            } else {
               $this->log("Error saving CouncilDelegate " . print_r($newDelegate, true));
               $err = True;
               $this->Flash->set(_txt('pl.ligo_council.error.unexpected'), array('key' => 'error'));
             }
           }
-
-          //TODO History Records
           // TODO design groups...
         }
         
