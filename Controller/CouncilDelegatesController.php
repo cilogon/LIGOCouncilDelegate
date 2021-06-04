@@ -26,6 +26,7 @@ class CouncilDelegatesController extends StandardController {
     $args['contain']['CoPerson'] = 'PrimaryName';
 
     $councilDelegates = $this->CouncilDelegate->find('all', $args);
+    $currentDelegateNumber = count($councilDelegates);
 
     // Query for active CO Person Roles for this COU and include
     // PrimaryName for rendering the form.
@@ -59,6 +60,7 @@ class CouncilDelegatesController extends StandardController {
       if($selectedCount > $allowedDelegateNumber) {
         $this->Flash->set(_txt('pl.ligo_council.error.delegate.count.high', array($allowedDelegateNumber)), array('key' => 'error'));
       } else {
+        $err = False;
         foreach($this->data['CouncilDelegate']['rows'] as $d) {
           // Reset model state between save/delete calls.
           $this->CouncilDelegate->clear();
@@ -71,7 +73,9 @@ class CouncilDelegatesController extends StandardController {
           // CO Person is current delegate and selected to be removed so delete.
           if(!empty($d['id']) && $d['delegate'] == 0) {
             if(!$this->CouncilDelegate->delete($d['id'])) {
-              // TODO Flash error here.
+              $this->log("Error deleting CouncilDelegate with ID " . print_r($d['id'], true));
+              $err = True;
+              $this->Flash->set(_txt('pl.ligo_council.error.unexpected'), array('key' => 'error'));
             }
             continue;
           }
@@ -80,19 +84,19 @@ class CouncilDelegatesController extends StandardController {
           if(empty($d['id']) && $d['delegate'] == 1) {
             $newDelegate['CouncilDelegate'] = $d;
             if(!$this->CouncilDelegate->save($newDelegate)) {
-              // TODO Flash error here.
+              $this->log("Error saving CouncilDelegate " . print_r($newDelegate, true));
+              $err = True;
+              $this->Flash->set(_txt('pl.ligo_council.error.unexpected'), array('key' => 'error'));
             }
           }
 
           //TODO History Records
+          // TODO design groups...
         }
         
-        if($selectedCount < $allowedDelegateNumber) {
-          $this->Flash->set(_txt('pl.ligo_council.info.delegate.count.low', array($allowedDelegateNumber)), array('key' => 'information'));
-        } else {
+        if(!$err) {
           $this->Flash->set(_txt('pl.ligo_council.success.delegate.count.updated'), array('key' => 'success'));
         }
-
       }
 
       // Redirect back to index to render updated delegate information.
@@ -106,6 +110,17 @@ class CouncilDelegatesController extends StandardController {
       $this->redirect($redir);
 
     } // End of process incoming POST.
+
+    // Process incoming GET and display current delegate status.
+
+    // Inform the user that the current number of delegates is low.
+    if($currentDelegateNumber < $allowedDelegateNumber) {
+      $this->Flash->set(_txt('pl.ligo_council.info.delegate.count.low', array($allowedDelegateNumber)),
+                        array(
+                          'key' => 'information',
+                          'clear' => True)
+                        );
+    }
 
     $this->set('council_delegates', $councilDelegates);
 
