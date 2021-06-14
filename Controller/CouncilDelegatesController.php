@@ -35,14 +35,13 @@ class CouncilDelegatesController extends StandardController {
 
     // Query for active CO Person Roles for this COU and include
     // PrimaryName for rendering the form.
-    $coPersonRoleModel = ClassRegistry::init('CoPersonRole');
 
     $args = array();
     $args['conditions']['CoPersonRole.cou_id'] = $couId;
     $args['conditions']['CoPersonRole.status'] = StatusEnum::Active;
     $args['contain']['CoPerson'] = 'PrimaryName';
 
-    $coPersonRoles = $coPersonRoleModel->find('all', $args);
+    $coPersonRoles = $this->CouncilDelegate->CoPerson->CoPersonRole->find('all', $args);
     usort($coPersonRoles, array($this, "coPersonPrimaryNameCmp"));
 
     // Compute the number of allowed council delegates.
@@ -110,13 +109,15 @@ class CouncilDelegatesController extends StandardController {
               $this->Flash->set(_txt('pl.ligo_council.error.unexpected'), array('key' => 'error'));
             }
           }
-          // TODO design groups...
         }
         
         if(!$err) {
           $this->Flash->set(_txt('pl.ligo_council.success.delegate.count.updated'), array('key' => 'success'));
         }
       }
+
+      // Synchronize memberships in the related CoGroup.
+      $this->synchronizeGroup($cou);
 
       // Redirect back to index to render updated delegate information.
       $redir = array();
@@ -184,5 +185,172 @@ class CouncilDelegatesController extends StandardController {
    */
   function coPersonPrimaryNameCmp($coPerson1, $coPerson2) {
     return strcmp($coPerson1['CoPerson']['PrimaryName']['family'], $coPerson2['CoPerson']['PrimaryName']['family']);
+  }
+
+  /*
+   * Synchronize the CoGroup representing the council delegates.
+   *
+   * @since COmanage Registry v3.3.1
+   * @return null
+   */
+
+  function synchronizeGroup($cou) {
+    // Create the parent LSC Council group if not already created.
+    $args = array();
+    $args['conditions']['CoGroup.name'] = LSCCouncilEnum::ParentGroupName;
+    $args['contain'] = 'Identifier';
+
+    $lscCouncilGroup = $this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->find('first', $args);
+
+    if(empty($lscCouncilGroup)) {
+      $this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->clear();
+
+      $data = array();
+      $data['CoGroup']['co_id'] = $cou['Cou']['co_id'];
+      $data['CoGroup']['name'] = LSCCouncilEnum::ParentGroupName;
+      $data['CoGroup']['description'] = LSCCouncilEnum::ParentGroupDescription;
+      $data['CoGroup']['open'] = false;
+      $data['CoGroup']['status'] = SuspendableStatusEnum::Active;
+      $data['CoGroup']['group_type'] = GroupEnum::Standard;
+
+      if(!$this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->save($data)) {
+        $this->Flash->set(_txt('pl.ligo_council.error.group.save'), array('key' => 'error'));
+        return;
+      }
+
+      $lscCouncilGroupId = $this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->id;
+
+      $this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->Identifier->clear();
+      
+      $data = array();
+      $data['Identifier']['identifier'] = LSCCouncilEnum::ParentGroupName;
+      $data['Identifier']['type'] = 'iscouncilgroup';
+      $data['Identifier']['status'] = SuspendableStatusEnum::Active;
+      $data['Identifier']['co_group_id'] = $lscCouncilGroupId;
+
+      $args = array();
+      $args['validate'] = false;
+
+      if(!$this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->Identifier->save($data, $args)) {
+        $this->Flash->set(_txt('pl.ligo_council.error.group.save'), array('key' => 'error'));
+        return;
+      }
+    } else {
+      $lscCouncilGroupId = $lscCouncilGroup['CoGroup']['id'];
+    }
+
+    // Create the COU LSC Council group if not already created.
+    $groupName = $cou['Cou']['name'] . ' ' . 'Council Delegates';
+    $args = array();
+    $args['conditions']['CoGroup.name'] = $groupName;
+    $args['contain'] = 'Identifier';
+
+    $councilGroup = $this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->find('first', $args);
+
+    if(empty($councilGroup)) {
+      $this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->clear();
+
+      $data = array();
+      $data['CoGroup']['co_id'] = $cou['Cou']['co_id'];
+      $data['CoGroup']['name'] = $groupName;
+      $data['CoGroup']['description'] = $groupName;
+      $data['CoGroup']['open'] = false;
+      $data['CoGroup']['status'] = SuspendableStatusEnum::Active;
+      $data['CoGroup']['group_type'] = GroupEnum::Standard;
+
+      if(!$this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->save($data)) {
+        $this->Flash->set(_txt('pl.ligo_council.error.group.save'), array('key' => 'error'));
+        return;
+      }
+
+      $councilGroupId = $this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->id;
+
+      $this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->Identifier->clear();
+      
+      $data = array();
+      $data['Identifier']['identifier'] = $groupName;
+      $data['Identifier']['type'] = 'iscouncilgroup';
+      $data['Identifier']['status'] = SuspendableStatusEnum::Active;
+      $data['Identifier']['co_group_id'] = $councilGroupId;
+
+      $args = array();
+      $args['validate'] = false;
+
+      if(!$this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->Identifier->save($data, $args)) {
+        $this->Flash->set(_txt('pl.ligo_council.error.group.save'), array('key' => 'error'));
+        return;
+      }
+    } else {
+      $councilGroupId = $councilGroup['CoGroup']['id'];
+    }
+
+    // Make the COU LSC Council group nested in the LSC Council group if not already.
+    $args = array();
+    $args['conditions']['CoGroupNesting.co_group_id'] = $councilGroupId;
+    $args['conditions']['CoGroupNesting.target_co_group_id'] = $lscCouncilGroupId;
+    $args['contain'] = false;
+
+    $nesting = $this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->CoGroupNesting->find('first', $args);
+
+    if(empty($nesting)) {
+      $data = array();
+      $data['CoGroupNesting']['co_group_id'] = $councilGroupId;
+      $data['CoGroupNesting']['target_co_group_id'] = $lscCouncilGroupId;
+
+      if(!$this->CouncilDelegate->CoPerson->CoGroupMember->CoGroup->CoGroupNesting->save($data)) {
+        $this->Flash->set(_txt('pl.ligo_council.error.group.save'), array('key' => 'error'));
+        return;
+      }
+    }
+
+    // Synchronize the COU LSC Council group memberships.
+
+    // Find the current delegates.
+    $args = array();
+    $args['conditions']['CouncilDelegate.cou_id'] = $cou['Cou']['id'];
+    $args['contain'] = false;
+
+    $councilDelegates = $this->CouncilDelegate->find('all', $args);
+    $councilDelegatesByCoPersonId = array();
+    foreach($councilDelegates as $d) {
+      $councilDelegatesByCoPersonId[] = $d['CouncilDelegate']['co_person_id'];
+    }
+
+    // Find the current group members.
+    $args = array();
+    $args['conditions']['CoGroupMember.co_group_id'] = $councilGroupId;
+    $args['contain'] = false;
+
+    $memberships = $this->CouncilDelegate->CoPerson->CoGroupMember->find('all', $args);
+    $membershipsByCoPersonId = array();
+    foreach($memberships as $m) {
+      $membershipsByCoPersonId[] = $m['CoGroupMember']['co_person_id'];
+    }
+
+    // Make sure each delegate is a member of the LSC council CoGroup.
+    foreach($councilDelegatesByCoPersonId as $coPersonId) {
+      if(!in_array($coPersonId, $membershipsByCoPersonId)) {
+        $this->CouncilDelegate->CoPerson->CoGroupMember->clear();
+
+        $data = array();
+        $data['CoGroupMember']['co_group_id'] = $councilGroupId;
+        $data['CoGroupMember']['co_person_id'] = $coPersonId;
+        $data['CoGroupMember']['member'] = true;
+        $data['CoGroupMember']['owner'] = false;
+
+        $this->CouncilDelegate->CoPerson->CoGroupMember->save($data);
+      }
+    }
+
+    // Delete any group member that is not a delegate.
+    foreach($membershipsByCoPersonId as $coPersonId) {
+      if(!in_array($coPersonId, $councilDelegatesByCoPersonId)) {
+        foreach($memberships as $m) {
+          if($m['CoGroupMember']['co_person_id'] == $coPersonId) {
+            $this->CouncilDelegate->CoPerson->CoGroupMember->delete($m['CoGroupMember']['id']);
+          }
+        }
+      }
+    }
   }
 }

@@ -9,6 +9,8 @@ $cm_ligo_council_texts['en_US'] = array(
   // Error messages
   'pl.ligo_council.error.delegate.count.high' => 'Please select not more than %1$s delegate(s)',
   'pl.ligo_council.error.unexpected' => 'Unexpected error. Please report this error to rt-auth@ligo.org',
+  'pl.ligo_council.error.noedit' => 'Please use the link in the People menu to manage council delegates',
+  'pl.ligo_council.error.group.save' => 'Unable to save council group',
 
   // Plugin texts
   'pl.ligo_council.menu.copeople' => '%1$s Council Delegates',
