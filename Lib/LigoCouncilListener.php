@@ -40,15 +40,15 @@ class LigoCouncilListener implements CakeEventListener {
     // then set the flash and redirect to prevent rendering of the
     // views to edit the group.
     if(!empty($group['Identifier'])) {
+
+      // Allow the platform admin to edit.
+      $roles = $controller->Role->calculateCMRoles();
+      if($roles['cmadmin']) {
+        return true;
+      }
+
       foreach($group['Identifier'] as $identifier) {
         if($identifier['type'] == 'iscouncilgroup') {
-
-            // Allow the platform admin to edit.
-            $roles = $controller->Role->calculateCMRoles();
-            if($roles['cmadmin']) {
-              return true;
-            }
-
           $controller->log("Preventing delete of Council Delegate CoGroup with ID $coGroupId");
           $controller->Flash->set(_txt('pl.ligo_council.error.noedit'), array("key" => "error"));
           $controller->redirect($controller->referer());
@@ -75,20 +75,20 @@ class LigoCouncilListener implements CakeEventListener {
     // then set the flash and redirect to prevent rendering of the
     // views to edit the group.
     if(isset($group['Identifier'])) {
-        foreach($group['Identifier'] as $identifier) {
-          if($identifier['type'] == 'iscouncilgroup') {
 
-            // Allow the platform admin to edit.
-            $roles = $controller->Role->calculateCMRoles();
-            if($roles['cmadmin']) {
-              return true;
-            }
+      // Allow the platform admin to edit.
+      $roles = $controller->Role->calculateCMRoles();
+      if($roles['cmadmin']) {
+        return true;
+      }
 
-            $controller->log("Preventing editing of LSC Council Group " . $group['CoGroup']['name']);
-            $controller->Flash->set(_txt('pl.ligo_council.error.noedit'), array("key" => "error"));
-            $controller->redirect($controller->referer());
-          }
+     foreach($group['Identifier'] as $identifier) {
+        if($identifier['type'] == 'iscouncilgroup') {
+          $controller->log("Preventing editing of LSC Council Group " . $group['CoGroup']['name']);
+          $controller->Flash->set(_txt('pl.ligo_council.error.noedit'), array("key" => "error"));
+          $controller->redirect($controller->referer());
         }
+      }
     }
 
     return true;
