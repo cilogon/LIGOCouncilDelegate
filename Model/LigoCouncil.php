@@ -7,6 +7,12 @@ class LigoCouncil extends AppModel {
   // Define class name for cake
   public $name = "LigoCouncil";
 
+  // Document foreign keys
+  public $cmPluginHasMany = array(
+    "CoPerson" => array("CouncilDelegate"),
+    "Cou" => array("CouncilDelegate")
+  );
+
   /**
    * Expose menu items.
    *

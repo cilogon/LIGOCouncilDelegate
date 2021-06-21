@@ -6,8 +6,12 @@
             <key />
             <autoincrement />
         </field>
-        <field name="cou_id" type="I" />
-        <field name="co_person_id" type="I" />
+        <field name="cou_id" type="I" >
+            <constraint>REFERENCES cm_cous(id)</constraint>
+        </field>
+        <field name="co_person_id" type="I" >
+            <constraint>REFERENCES cm_copeople(id)</constraint>
+        </field>
         <field name="created" type="T" />
         <field name="modified" type="T" />
         <field name="council_delegate_id" type="I">
